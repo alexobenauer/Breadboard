@@ -11,7 +11,8 @@ import SwiftUI
 struct BreadboardApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            // ContentView()
+            WorkspaceView()
         }
     }
 }
