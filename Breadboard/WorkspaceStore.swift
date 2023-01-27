@@ -5,21 +5,29 @@
 //  Created by Alexander Obenauer on 1/13/23.
 //
 
-import Foundation
+import SwiftUI
 import CoreLocation
+import MapKit
 
 class WorkspaceStore: ObservableObject {
     @Published var widgets: [any Widget] = []
     @Published var primitives: [(PrimitiveValue, UUID)] = []
-    @Published var items: [any WorkspaceItem] = []
+    @Published var items: [(any WorkspaceItem, UUID)] = []
+    @Published var focusHover: UUID? = nil
+    @Published var focusSelect: [UUID] = []
     
     @Published var widgetFrame: [UUID: CGRect] = [:]
-    @Published var widgetOffset: [UUID: CGSize] = [:]
+    @Published var widgetOffset: [UUID: CGRect] = [:]
     
     @Published var doFetching: Bool = true
     @Published var spatiallyAware: Bool = false
     @Published var senseAround: Double = 1000
     @Published var groupContexts: Bool = false
+    @Published var peekOnHover: Bool = false
+    
+    private var mousePosition: CGPoint? = nil
+    private var hoverThrottle: DispatchWorkItem? = nil
+    @Published var peekHoveredItemAt: CGPoint? = nil
     
     // Three options: get latest value from anywhere,
     //  get latest value from nearest emitter of value type,
@@ -28,15 +36,143 @@ class WorkspaceStore: ObservableObject {
     enum PrimitiveValue {
         case date(Date)
         case location(CLLocation)
+        case region(MKCoordinateRegion)
     }
     
-    func openWidget(_ widget: any Widget) {
+    func openWidget(_ widget: any Widget, atLoc loc: CGPoint? = nil) {
+        self.widgetFrame[widget.id] = CGRect(x: loc?.x ?? 0, y: loc?.y ?? 0, width: 550, height: 350)
+        
         self.widgets.append(widget)
+    }
+    
+    func closeWidget(id: UUID) {
+        self.widgets = widgets.filter({ $0.id != id })
     }
     
     func donatePrimitiveValue(_ value: PrimitiveValue, fromId: UUID) {
         print("Primitive donated: \(String(describing: value))")
         self.primitives.insert((value, fromId), at: 0)
+    }
+    
+    func donateItems(items: [any WorkspaceItem], fromId: UUID) {
+        self.items = self.items
+            .filter({ item in
+                item.1 != fromId
+            })
+        + items.map({ ($0, fromId) })
+    }
+    
+    func setFocusHover(id: UUID?, isHovering: Bool) {
+        if isHovering {
+            if focusHover != id {
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    focusHover = id
+                }
+            }
+            
+            updateHoverThrottle()
+        }
+        else if !isHovering {
+            if focusHover == id {
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    focusHover = nil
+                }
+            }
+            
+            updateHoverThrottle(cancel: true)
+        }
+    }
+    
+    func setMousePosition(_ position: CGPoint?) {
+        guard peekOnHover else { return }
+        
+        self.mousePosition = position
+        updateHoverThrottle()
+    }
+    
+    private func updateHoverThrottle(cancel: Bool = false) {
+        guard peekOnHover else { return }
+        
+        // self.peekHoveredItemAt = nil
+        self.hoverThrottle?.cancel()
+        
+        if cancel {
+            self.hoverThrottle = nil
+            self.peekHoveredItemAt = nil
+            return
+        }
+        
+        if peekHoveredItemAt != nil {
+            return
+        }
+        
+        let task = DispatchWorkItem {
+            withAnimation(.easeInOut(duration: 0.15)) {
+                self.peekHoveredItemAt = self.mousePosition
+            }
+        }
+        
+        self.hoverThrottle = task
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: task)
+    }
+    
+    func closePeekHoveredItem() {
+//        if let focusHover {
+//            self.setFocusHover(id: focusHover, isHovering: false)
+//        }
+        self.focusHover = nil
+        
+        withAnimation(.easeInOut(duration: 0.15)) {
+            self.peekHoveredItemAt = nil
+            updateHoverThrottle(cancel: true)
+        }
+    }
+    
+    
+    func getContextualRegion(forWidgetId widgetId: UUID) -> MKCoordinateRegion? {
+        if !spatiallyAware {
+            // Just get the latest
+            for primitive in primitives {
+                if case let .region(region) = primitive.0 {
+                    return region
+                }
+            }
+            
+            return nil
+        }
+        else if groupContexts == false {
+            // Now we want to see how it works if things need to be within a certain proximity
+            
+            let ids = getWidgetsInContext(ofWidgetId: widgetId)
+            
+            for id in ids {
+                let primitives = primitives.filter({ $0.1 == id })
+                
+                for primitive in primitives {
+                    if case let .region(region) = primitive.0 {
+                        return region
+                    }
+                }
+            }
+        }
+        else {
+            // And now we want to create proximity-based groups
+            
+            let ids = getWidgetsInGroupedContext(ofWidgetId: widgetId)
+            
+            for id in ids {
+                let primitives = primitives.filter({ $0.1 == id })
+                
+                for primitive in primitives {
+                    if case let .region(region) = primitive.0 {
+                        return region
+                    }
+                }
+            }
+        }
+        
+        return nil
     }
     
     func getContextualLocation(forWidgetId widgetId: UUID) -> CLLocation? {
@@ -50,31 +186,6 @@ class WorkspaceStore: ObservableObject {
 
             return nil
         }
-        // TODO: Perf can become *terrible* here
-        // This is partially written to let quick experimentation happen
-        //  Once we hone in on one direction for the concept, we can explore
-        //  better ways of computing the results we're looking for
-//        else if senseAround > 999 {
-//            // Find widget with location nearest this
-//            let myPosition = position(forWidgetId: widgetId)
-//
-//            let widgets = widgets.sorted { a, b in
-//                let aPos = position(forWidgetId: a.id)
-//                let bPos = position(forWidgetId: b.id)
-//
-//                return (abs(myPosition.x - aPos.x) + abs(myPosition.y - aPos.y)) < (abs(myPosition.x - bPos.x) + abs(myPosition.y - bPos.y))
-//            }
-//
-//            for widget in widgets {
-//                let primitives = primitives.filter({ $0.1 == widget.id })
-//
-//                for primitive in primitives {
-//                    if case let .location(location) = primitive.0 {
-//                        return location
-//                    }
-//                }
-//            }
-//        }
         else if groupContexts == false {
             // Now we want to see how it works if things need to be within a certain proximity
 
@@ -107,6 +218,22 @@ class WorkspaceStore: ObservableObject {
         }
 
         return nil
+    }
+    
+    func getContextualItems(forWidgetId widgetId: UUID) -> [any WorkspaceItem] {
+        if !spatiallyAware {
+            return items.map({ $0.0 })
+        }
+        else if groupContexts == false {
+            let ids = getWidgetsInContext(ofWidgetId: widgetId)
+            
+            return items.filter({ ids.contains($0.1) }).map({ $0.0 })
+        }
+        else {
+            let ids = getWidgetsInGroupedContext(ofWidgetId: widgetId)
+            
+            return items.filter({ ids.contains($0.1) }).map({ $0.0 })
+        }
     }
     
     private func getWidgetsInContext(ofWidgetId id: UUID) -> [UUID] {
@@ -191,8 +318,8 @@ class WorkspaceStore: ObservableObject {
     
     private func position(forWidgetId widgetId: UUID) -> CGPoint {
         let wLoc = widgetFrame[widgetId]?.origin ?? .zero
-        let wOff = widgetOffset[widgetId] ?? .zero
-        let wPos = CGPoint(x: wLoc.x + wOff.width, y: wLoc.y + wOff.height)
+        let wOff = widgetOffset[widgetId]?.origin ?? .zero
+        let wPos = CGPoint(x: wLoc.x + wOff.x, y: wLoc.y + wOff.y)
         
         return wPos
     }
@@ -201,8 +328,10 @@ class WorkspaceStore: ObservableObject {
         var frame = widgetFrame[widgetId] ?? .zero
         let offset = widgetOffset[widgetId] ?? .zero
         
-        frame.origin.x += offset.width
-        frame.origin.y += offset.height
+        frame.origin.x += offset.origin.x
+        frame.origin.y += offset.origin.y
+        frame.size.width += offset.size.width
+        frame.size.height += offset.size.height
         
         return frame
     }
@@ -239,7 +368,10 @@ class WorkspaceStore: ObservableObject {
 
 }
 
-protocol WorkspaceItem {
+protocol WorkspaceItem: Hashable, Identifiable, Equatable {
     var type: String { get }
     var associations: [WorkspaceStore.PrimitiveValue] { get }
+    var id: UUID { get }
+    
+    func generateWidget() -> any Widget
 }

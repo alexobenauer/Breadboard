@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		32252427297BDA92009E38DC /* CampgroundFinderWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32252426297BDA92009E38DC /* CampgroundFinderWidget.swift */; };
+		32252429297BE03A009E38DC /* CampgroundWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32252428297BE03A009E38DC /* CampgroundWidget.swift */; };
+		3225242B297C30A0009E38DC /* PlaceFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3225242A297C30A0009E38DC /* PlaceFinder.swift */; };
 		324DB37F29712DEF005FFA49 /* BreadboardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 324DB37E29712DEF005FFA49 /* BreadboardApp.swift */; };
 		324DB38129712DEF005FFA49 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 324DB38029712DEF005FFA49 /* ContentView.swift */; };
 		324DB38329712DF0005FFA49 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 324DB38229712DF0005FFA49 /* Assets.xcassets */; };
@@ -40,6 +43,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		32252426297BDA92009E38DC /* CampgroundFinderWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampgroundFinderWidget.swift; sourceTree = "<group>"; };
+		32252428297BE03A009E38DC /* CampgroundWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampgroundWidget.swift; sourceTree = "<group>"; };
+		3225242A297C30A0009E38DC /* PlaceFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceFinder.swift; sourceTree = "<group>"; };
 		324DB37B29712DEF005FFA49 /* Breadboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Breadboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		324DB37E29712DEF005FFA49 /* BreadboardApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreadboardApp.swift; sourceTree = "<group>"; };
 		324DB38029712DEF005FFA49 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -114,7 +120,10 @@
 				324DB3AB29718D76005FFA49 /* Widget.swift */,
 				324DB3AD29718D8D005FFA49 /* WidgetView.swift */,
 				324DB3AF29718D96005FFA49 /* MapWidget.swift */,
+				3225242A297C30A0009E38DC /* PlaceFinder.swift */,
 				324DB3B129718D9D005FFA49 /* WeatherWidget.swift */,
+				32252426297BDA92009E38DC /* CampgroundFinderWidget.swift */,
+				32252428297BE03A009E38DC /* CampgroundWidget.swift */,
 				324DB38229712DF0005FFA49 /* Assets.xcassets */,
 				324DB38429712DF0005FFA49 /* Breadboard.entitlements */,
 				324DB38529712DF0005FFA49 /* Preview Content */,
@@ -278,10 +287,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				324DB3AA29718D52005FFA49 /* WorkspaceView.swift in Sources */,
+				3225242B297C30A0009E38DC /* PlaceFinder.swift in Sources */,
+				32252429297BE03A009E38DC /* CampgroundWidget.swift in Sources */,
 				324DB3B229718D9D005FFA49 /* WeatherWidget.swift in Sources */,
 				324DB38129712DEF005FFA49 /* ContentView.swift in Sources */,
 				324DB3B42971A113005FFA49 /* WorkspaceStore.swift in Sources */,
 				324DB37F29712DEF005FFA49 /* BreadboardApp.swift in Sources */,
+				32252427297BDA92009E38DC /* CampgroundFinderWidget.swift in Sources */,
 				324DB3AC29718D76005FFA49 /* Widget.swift in Sources */,
 				324DB3AE29718D8D005FFA49 /* WidgetView.swift in Sources */,
 				324DB3B029718D96005FFA49 /* MapWidget.swift in Sources */,
@@ -454,7 +466,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
@@ -493,7 +505,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;

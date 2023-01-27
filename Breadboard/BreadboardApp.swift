@@ -9,9 +9,22 @@ import SwiftUI
 
 @main
 struct BreadboardApp: App {
+    @State private var boards: [UUID] = []
+    
     var body: some Scene {
         WindowGroup {
-            // ContentView()
+//            NavigationSplitView {
+//                ForEach(boards, id: \.self) { id in
+//                    NavigationLink {
+//                        WorkspaceView()
+//                    } label: {
+//                        Text(id.uuidString)
+//                    }
+//                }
+//            } detail: {
+//                WorkspaceView()
+//            }
+
             WorkspaceView()
         }
     }

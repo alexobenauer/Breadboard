@@ -20,6 +20,8 @@ struct WeatherWidget: Widget {
     @State private var locationTitle: String = "-"
     @StateObject private var weatherManager = WeatherManager()
     
+    @State private var selectedView = WidgetView.daily
+    
     private let geocoder = CLGeocoder()
     
     private func update() async {
@@ -55,9 +57,18 @@ struct WeatherWidget: Widget {
                 HStack {
                     Text(locationTitle)
                         .font(.title).bold()
-                        .padding(.bottom)
+                        
                     Spacer()
+                    
+                    Picker(selection: $selectedView, label: Text("")) {
+                        ForEach(WidgetView.allCases, id: \.self) { option in
+                            Text(option.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 100)
                 }
+                .padding(.bottom)
                 
                 if store.doFetching {
                     Group {
@@ -71,14 +82,29 @@ struct WeatherWidget: Widget {
                             
                             Divider()
                             
-                            ForEach(weather.hourlyForecast, id: \.date) { hourly in
-                                HStack {
-                                    Text(hourly.date.timeStringShort)
-                                        .frame(width: 80, alignment: .trailing)
-                                        .padding(.trailing)
-                                    Label(hourly.condition.description, systemImage: hourly.symbolName)
-                                    Spacer()
-                                    Text(hourly.temperature.converted(to: .fahrenheit).tempStringShort)
+                            switch selectedView {
+                            case .hourly:
+                                ForEach(weather.hourlyForecast, id: \.date) { hourly in
+                                    HStack {
+                                        Text(hourly.date.timeStringShort)
+                                            .frame(width: 80, alignment: .trailing)
+                                            .padding(.trailing)
+                                        Label(hourly.condition.description, systemImage: hourly.symbolName)
+                                        Spacer()
+                                        Text(hourly.temperature.converted(to: .fahrenheit).tempStringShort)
+                                    }
+                                }
+                            case .daily:
+                                ForEach(weather.dailyForecast, id: \.date) { daily in
+                                    HStack {
+                                        Text(daily.date.dateString)
+                                            .frame(width: 100, alignment: .leading)
+                                            .padding(.trailing)
+                                        Label(daily.condition.description, systemImage: daily.symbolName)
+                                        Spacer()
+                                        Text(daily.lowTemperature.converted(to: .fahrenheit).tempStringShort)
+                                        Text(daily.highTemperature.converted(to: .fahrenheit).tempStringShort)
+                                    }
                                 }
                             }
                         }
@@ -101,6 +127,13 @@ struct WeatherWidget: Widget {
         .onAppear {
             Task { await update() }
         }
+    }
+}
+
+fileprivate extension WeatherWidget {
+    enum WidgetView: String, CaseIterable {
+        case hourly = "Hourly"
+        case daily = "Daily"
     }
 }
 
@@ -137,17 +170,29 @@ fileprivate class WeatherManager: ObservableObject {
         
         self.updateThrottle = task
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3), execute: task)
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: task)
     }
 }
 
-fileprivate let dateFormatter = DateFormatter()
+fileprivate let dateFormatter = {
+    let f = DateFormatter()
+    f.dateFormat = "EEE, MMM d"
+    return f
+}()
+
+fileprivate let timeFormatter = {
+    let f = DateFormatter()
+    f.timeStyle = .short
+    return f
+}()
 
 fileprivate extension Date {
+    var dateString: String {
+        dateFormatter.string(from: self)
+    }
+    
     var timeStringShort: String {
-        dateFormatter.dateStyle = .none
-        dateFormatter.timeStyle = .short
-        return dateFormatter.string(from: self)
+        timeFormatter.string(from: self)
     }
 }
 
