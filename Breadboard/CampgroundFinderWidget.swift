@@ -20,7 +20,7 @@ import MapKit
 struct CampgroundFinderWidget: Widget {
     var title: String { "Campground Finder" }
     var icon: String { "tent.2.fill" }
-    var color: Color { .red }
+    var color: Color { .blue }
     
     let id = UUID()
     
@@ -30,6 +30,8 @@ struct CampgroundFinderWidget: Widget {
     // @State private var results: [CampgroundItem] = []
     @State private var cgType: CGType = .campground
     @StateObject private var manager = Manager()
+    
+    @State private var skipNextMapUpdate: Bool = false
     
     enum CGType: String, CaseIterable {
         case campground = "Campground"
@@ -90,7 +92,7 @@ struct CampgroundFinderWidget: Widget {
                                     Text(cgType.rawValue)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
-                                        .background(self.cgType == cgType ? .red : .primary.opacity(0.05))
+                                        .background(self.cgType == cgType ? .blue : .primary.opacity(0.05))
                                         .cornerRadius(50)
                                 }
                                 .buttonStyle(.plain)
@@ -147,12 +149,18 @@ struct CampgroundFinderWidget: Widget {
             update()
         }
         .onChange(of: store.getContextualRegion(forWidgetId: id) ?? MKCoordinateRegion()) { _ in
+            if skipNextMapUpdate {
+                self.skipNextMapUpdate = false
+                return
+            }
+            
             update()
         }
         .onChange(of: cgType, perform: { _ in
             update()
         })
         .onChange(of: manager.results) { newValue in
+            self.skipNextMapUpdate = true
             store.donateItems(items: newValue, fromId: id)
         }
     }

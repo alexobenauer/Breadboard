@@ -13,15 +13,21 @@ class WorkspaceStore: ObservableObject {
     @Published var widgets: [any Widget] = []
     @Published var primitives: [(PrimitiveValue, UUID)] = []
     @Published var items: [(any WorkspaceItem, UUID)] = []
+    
+    // Next: Base primitives & items on:
+    @Published var outputs: [UUID: [any WorkspaceItem]] = [:]
+    
     @Published var focusHover: UUID? = nil
     @Published var focusSelect: [UUID] = []
     
     @Published var widgetFrame: [UUID: CGRect] = [:]
     @Published var widgetOffset: [UUID: CGRect] = [:]
+    @Published var fullscreenWidget: UUID? = nil
     
     @Published var doFetching: Bool = true
     @Published var spatiallyAware: Bool = false
     @Published var senseAround: Double = 1000
+    @Published var showRadius: Bool = false
     @Published var groupContexts: Bool = false
     @Published var peekOnHover: Bool = false
     
@@ -33,7 +39,7 @@ class WorkspaceStore: ObservableObject {
     //  get latest value from nearest emitter of value type,
     //  get latest value within grouping
     
-    enum PrimitiveValue {
+    enum PrimitiveValue: Equatable, Hashable {
         case date(Date)
         case location(CLLocation)
         case region(MKCoordinateRegion)
@@ -47,6 +53,14 @@ class WorkspaceStore: ObservableObject {
     
     func closeWidget(id: UUID) {
         self.widgets = widgets.filter({ $0.id != id })
+        
+        self.primitives = primitives.filter({ $0.1 != id })
+        self.items = items.filter({ $0.1 != id })
+        self.outputs.removeValue(forKey: id)
+    }
+    
+    func fullscreenWidget(id: UUID?) {
+        self.fullscreenWidget = id
     }
     
     func donatePrimitiveValue(_ value: PrimitiveValue, fromId: UUID) {
@@ -60,6 +74,10 @@ class WorkspaceStore: ObservableObject {
                 item.1 != fromId
             })
         + items.map({ ($0, fromId) })
+    }
+    
+    func declareOutputs(_ outputs: [any WorkspaceItem], fromWidgetId: UUID) {
+        self.outputs[fromWidgetId] = outputs
     }
     
     func setFocusHover(id: UUID?, isHovering: Bool) {
@@ -369,9 +387,40 @@ class WorkspaceStore: ObservableObject {
 }
 
 protocol WorkspaceItem: Hashable, Identifiable, Equatable {
-    var type: String { get }
-    var associations: [WorkspaceStore.PrimitiveValue] { get }
     var id: UUID { get }
     
-    func generateWidget() -> any Widget
+    var type: String { get }
+    var primitiveValue: WorkspaceStore.PrimitiveValue? { get }
+    var associations: [WorkspaceStore.PrimitiveValue] { get }
+    var items: [any WorkspaceItem] { get }
+    
+    func generateWidget() -> (any Widget)?
 }
+
+extension WorkspaceItem {
+    var primitiveValue: WorkspaceStore.PrimitiveValue? {
+        return nil
+    }
+    
+    var associations: [WorkspaceStore.PrimitiveValue] {
+        return []
+    }
+    
+    var items: [any WorkspaceItem] {
+        return []
+    }
+    
+    func generateWidget() -> (any Widget)? {
+        return nil
+    }
+}
+    
+    
+
+//struct WorkspaceItemSet: WorkspaceItem {
+//    var type: String
+//    var items: [any WorkspaceItem]
+//
+//    var associations: [WorkspaceStore.PrimitiveValue] { return [] }
+//    let id = UUID()
+//}

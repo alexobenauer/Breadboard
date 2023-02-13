@@ -12,6 +12,9 @@ struct WidgetView: View {
 
     @EnvironmentObject var store: WorkspaceStore
     
+    @State private var isHovering: Bool = false
+    @State private var showChipBar: Bool = false
+    
     var size: CGSize {
         store.widgetFrame[widget.id]?.size ?? CGSize(width: 550, height: 350)
     }
@@ -32,7 +35,17 @@ struct WidgetView: View {
         ZStack {
             ZStack {
                 VStack(spacing: 0) {
-                    TopBar(title: widget.title, icon: widget.icon, color: widget.color)
+                    TopBar(title: widget.title, icon: widget.icon, color: widget.color, showTapAdd: !showChipBar) {
+                        showChipBar = true
+                    }
+                    
+                    if showChipBar {
+                        Divider()
+                            .background(.white.opacity(0.05))
+                            .padding(.horizontal)
+                            .padding(.vertical, -1)
+                        ChipBar(color: widget.color)
+                    }
                     
                     VStack {
                         AnyView(widget)
@@ -55,6 +68,26 @@ struct WidgetView: View {
                     }
                 }
                 .opacity(0.1)
+                
+                HStack {
+                    VStack {
+                        
+                    }
+                    
+                    Spacer()
+                    
+                    VStack {
+//                        ForEach(store.outputs[widget.id] ?? [], id: \.id) { d in
+//                            switch d {
+//                            case let d as? AddressItem:
+//                                Text("A")
+//                            default:
+//                                Text("!")
+//                            }
+//                        }
+                    }
+                }
+                .padding(.horizontal, -50)
             }
             .offset(x: posOffset.x, y: posOffset.y)
             
@@ -90,7 +123,7 @@ struct WidgetView: View {
                         }
                     )
                     .simultaneousGesture(
-                        TapGesture(count: 2).onEnded {
+                        TapGesture(count: 3).onEnded {
                             store.closeWidget(id: widget.id)
                         }
                     )
@@ -121,6 +154,9 @@ struct WidgetView: View {
                 }
             }
         }
+        .onHover { isHovering in
+            self.isHovering = isHovering
+        }
 //        .position(x: position.x, y: position.y)
 //        .frame(width: size.width + sizeOffset.width, height: size.height + sizeOffset.height)
     }
@@ -130,17 +166,94 @@ fileprivate struct TopBar: View {
     let title: String
     let icon: String
     let color: Color
+    let showTapAdd: Bool
+    let onTapAdd: () -> Void
     
     var body: some View {
         HStack {
             Text(title)
                 .bold()
+            
+            if showTapAdd {
+                Image(systemName: "plus")
+                    .opacity(0.5)
+                    .onTapGesture {
+                        onTapAdd()
+                    }
+            }
+            
             Spacer()
             Image(systemName: icon)
         }
         .padding()
         .foregroundColor(color)
         .background(color.opacity(0.1))
+    }
+}
+
+fileprivate struct ChipBar: View {
+    let color: Color
+    @State private var text: String = ""
+    
+    var body: some View {
+        ScrollView(.horizontal) {
+            HStack {
+                Chip(title: "Campground Finder", subtitle: "8", icon: "tent.2.fill", color: .blue, toggle: { }, peek: { }, remove: { })
+                
+                TextField("", text: $text)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 11))
+                    .frame(minWidth: 320)
+            }
+            .padding(.horizontal, 7)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.1))
+        }
+    }
+}
+
+fileprivate struct Chip: View {
+    let title: String
+    let subtitle: String?
+    let icon: String
+    let color: Color
+    
+    let toggle: () -> Void
+    let peek: () -> Void
+    let remove: () -> Void
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+            
+            Text(title)
+                .bold()
+            
+            if let subtitle {
+                Text(subtitle)
+            }
+        }
+        .font(.system(size: 11))
+        .padding(.horizontal, 7)
+        .padding(.vertical, 4)
+        .background(color)
+        .foregroundColor(.white)
+        .cornerRadius(100)
+        .gesture(
+            TapGesture().onEnded {
+                toggle()
+            }
+        )
+        .simultaneousGesture(
+            TapGesture(count: 2).onEnded {
+                peek()
+            }
+        )
+        .simultaneousGesture(
+            TapGesture(count: 3).onEnded {
+                remove()
+            }
+        )
     }
 }
 

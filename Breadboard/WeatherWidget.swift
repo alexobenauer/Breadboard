@@ -29,6 +29,18 @@ struct WeatherWidget: Widget {
             return
         }
         
+//        var location: CLLocation?
+//        
+//        for item in store.getContextualItems(forWidgetId: id) {
+//            if let locationItem = item as? LocationItem {
+//                location = locationItem.center
+//                
+//                break
+//            }
+//        }
+//        
+//        guard let location else { return }
+        
         do {
             let placemarks = try await geocoder.reverseGeocodeLocation(location)
                 

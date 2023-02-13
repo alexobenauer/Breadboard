@@ -31,9 +31,20 @@ struct WorkspaceView: View {
                 .opacity(0.25)
             
             ForEach(store.widgets, id: \.id) { widget in
-                WidgetView(widget: widget)
-                    .position(x: store.widgetFrame[widget.id]?.origin.x ?? 0, y: store.widgetFrame[widget.id]?.origin.y ?? 0)
-                    .frame(width: (store.widgetFrame[widget.id]?.size.width ?? 550) + (store.widgetOffset[widget.id]?.size.width ?? 0), height: (store.widgetFrame[widget.id]?.size.height ?? 350) + (store.widgetOffset[widget.id]?.size.height ?? 0))
+                ZStack {
+//                    if store.senseAround > 0 && store.senseAround < 1000 {
+//                        Rectangle()
+//                            .fill(widget.color)
+//                            .position(x: (store.widgetFrame[widget.id]?.origin.x ?? 0) - store.senseAround/2, y: (store.widgetFrame[widget.id]?.origin.y ?? 0) - store.senseAround/2)
+//                            .frame(width: (store.widgetFrame[widget.id]?.size.width ?? 550) + (store.widgetOffset[widget.id]?.size.width ?? 0) + store.senseAround*2, height: (store.widgetFrame[widget.id]?.size.height ?? 350) + (store.widgetOffset[widget.id]?.size.height ?? 0) + store.senseAround*2)
+//                    }
+                    
+                    WidgetView(widget: widget)
+                        .position(x: store.widgetFrame[widget.id]?.origin.x ?? 0, y: store.widgetFrame[widget.id]?.origin.y ?? 0)
+                        .frame(width: (store.widgetFrame[widget.id]?.size.width ?? 550) + (store.widgetOffset[widget.id]?.size.width ?? 0), height: (store.widgetFrame[widget.id]?.size.height ?? 350) + (store.widgetOffset[widget.id]?.size.height ?? 0))
+                    //.border(store.senseAround < 1000 && store.senseAround > 0 ? widget.color as Color : Color.clear, width: store.senseAround < 1000 ? store.senseAround : 0)
+                        .shadow(color: store.showRadius && store.senseAround < 1000 && store.senseAround > 0 ? widget.color.opacity((store.senseAround / 1000) + 0.25) : Color.clear, radius: store.showRadius && store.senseAround < 1000 ? (store.senseAround / 1.8) : 0)
+                }
             }
             
             VStack {
@@ -57,6 +68,20 @@ struct WorkspaceView: View {
                         store.openWidget(CampgroundFinderWidget())
                     } label: {
                         Label("Campground Finder", systemImage: "tent.2.fill")
+                    }
+                    .tint(Color.blue)
+                    
+                    Button {
+                        store.openWidget(TextDetectorWidget())
+                    } label: {
+                        Label("Text Detector", systemImage: "highlighter") // note.text
+                    }
+                    .tint(Color.yellow)
+                    
+                    Button {
+                        store.openWidget(CalendarWidget())
+                    } label: {
+                        Label("Calendar", systemImage: "calendar")
                     }
                     .tint(Color.red)
                     
@@ -96,6 +121,12 @@ struct WorkspaceView: View {
                                 .font(Font.system(size: 12).monospaced())
                                 .opacity(0.5)
                                 .frame(width: 30, alignment: .leading)
+                            
+                            Toggle(isOn: $store.showRadius) {
+                                Text("Show")
+                                    .font(Font.system(size: 12).monospaced())
+                            }
+                            .disabled(!store.spatiallyAware)
                             
                             Toggle(isOn: $store.groupContexts) {
                                 Label("Group contexts", systemImage: "rectangle.3.group")
